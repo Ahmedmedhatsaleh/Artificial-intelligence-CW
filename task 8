@@ -1,0 +1,122 @@
+import heapq
+import time
+from copy import deepcopy
+
+GOAL_STATE = [[1,2,3],[4,5,6],[7,8,0]]
+
+def find_position(puzzle, value):
+    for i in range(3):
+        for j in range(3):
+            if puzzle[i][j] == value:
+                return (i, j)
+    return None
+
+def flatten(puzzle):
+    return [x for row in puzzle for x in row]
+
+def is_solvable(puzzle):
+    arr = flatten(puzzle)
+    arr = [x for x in arr if x != 0]
+    inversions = sum(1 for i in range(len(arr)) for j in range(i+1, len(arr)) if arr[i] > arr[j])
+    return inversions % 2 == 0
+
+def misplaced_tiles(puzzle):
+    misplaced = 0
+    for i in range(3):
+        for j in range(3):
+            if puzzle[i][j] != 0 and puzzle[i][j] != GOAL_STATE[i][j]:
+                misplaced += 1
+    return misplaced
+
+def manhattan_distance(puzzle):
+    dist = 0
+    for i in range(3):
+        for j in range(3):
+            value = puzzle[i][j]
+            if value != 0:
+                goal_i, goal_j = divmod(value - 1, 3)
+                dist += abs(i - goal_i) + abs(j - goal_j)
+    return dist
+
+def linear_conflict(puzzle):
+    manhattan = manhattan_distance(puzzle)
+    conflict = 0
+    for i in range(3):
+        row = [puzzle[i][j] for j in range(3) if puzzle[i][j] != 0]
+        for j in range(len(row)):
+            for k in range(j + 1, len(row)):
+                val1, val2 = row[j], row[k]
+                if (val1 - 1)//3 == i and (val2 - 1)//3 == i and val1 > val2:
+                    conflict += 2
+    for j in range(3):
+        col = [puzzle[i][j] for i in range(3) if puzzle[i][j] != 0]
+        for i in range(len(col)):
+            for k in range(i + 1, len(col)):
+                val1, val2 = col[i], col[k]
+                if (val1 - 1)%3 == j and (val2 - 1)%3 == j and val1 > val2:
+                    conflict += 2
+    return manhattan + conflict
+
+def get_neighbors(puzzle):
+    neighbors = []
+    x, y = find_position(puzzle, 0)
+    moves = [(x-1,y), (x+1,y), (x,y-1), (x,y+1)]
+    for nx, ny in moves:
+        if 0 <= nx < 3 and 0 <= ny < 3:
+            new_puzzle = deepcopy(puzzle)
+            new_puzzle[x][y], new_puzzle[nx][ny] = new_puzzle[nx][ny], new_puzzle[x][y]
+            neighbors.append(new_puzzle)
+    return neighbors
+
+def a_star(start, heuristic_func):
+    start_time = time.time()
+    open_list = []
+    heapq.heappush(open_list, (0 + heuristic_func(start), 0, start))
+    visited = set()
+    nodes_expanded = 0
+    while open_list:
+        f, g, current = heapq.heappop(open_list)
+        state_tuple = tuple(flatten(current))
+        if state_tuple in visited:
+            continue
+        visited.add(state_tuple)
+        nodes_expanded += 1
+        if current == GOAL_STATE:
+            end_time = time.time()
+            return True, end_time - start_time, nodes_expanded
+        for neighbor in get_neighbors(current):
+            n_tuple = tuple(flatten(neighbor))
+            if n_tuple not in visited:
+                heapq.heappush(open_list, (g + 1 + heuristic_func(neighbor), g + 1, neighbor))
+    end_time = time.time()
+    return False, end_time - start_time, nodes_expanded
+
+initial_states = {
+    "S1 (Trivial Solved)": [[1,2,3],[4,5,6],[7,8,0]],
+    "S2 (Simple Move)": [[1,2,3],[4,5,6],[0,7,8]],
+    "S3 (Moderate)": [[1,2,0],[4,5,3],[7,8,6]],
+    "S4 (Hard)": [[8,6,7],[2,5,4],[3,0,1]],
+    "S5 (Unsolvable)": [[1,2,3],[4,5,6],[8,7,0]],
+}
+
+heuristics = {
+    "Misplaced Tiles": misplaced_tiles,
+    "Manhattan Distance": manhattan_distance,
+    "Linear Conflict": linear_conflict,
+}
+
+results = []
+
+for name, state in initial_states.items():
+    solvable = is_solvable(state)
+    print(f"Testing {name} | Solvable: {solvable}")
+    for h_name, h_func in heuristics.items():
+        solved, t, nodes = a_star(state, h_func)
+        print(f"  Heuristic: {h_name:<20} | Solved: {solved:<5} | Time: {t:.5f}s | Nodes Expanded: {nodes}")
+        results.append((name, h_name, solved, t, nodes))
+    print()
+
+print("\n===== SUMMARY =====")
+print(f"{'State':25} {'Heuristic':20} {'Solved':8} {'Time(s)':10} {'Nodes Expanded'}")
+for r in results:
+    print(f"{r[0]:25} {r[1]:20} {str(r[2]):8} {r[3]:<10.5f} {r[4]}")
