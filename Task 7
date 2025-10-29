@@ -1,0 +1,86 @@
+from collections import deque
+from queue import PriorityQueue
+maze = [
+    [1, 1, 0, 1, 1, 1, 0, 1, 1, 1],
+    [0, 1, 0, 1, 0, 1, 1, 0, 1, 0],
+    [1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+    [1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+    [1, 1, 0, 0, 1, 0, 1, 0, 1, 1],
+    [0, 1, 1, 0, 1, 1, 1, 0, 1, 0],
+    [1, 0, 1, 1, 1, 0, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 0, 1, 1, 1, 1]
+]
+start = (0, 0)
+goal = (9, 9)
+moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+def bfs(maze, start, goal):
+    queue = deque([(start, [start])])
+    visited = set()
+    steps = 0
+    max_queue = 1
+    while queue:
+        (x, y), path = queue.popleft()
+        steps += 1
+        visited.add((x, y))
+        print(f"BFS Step {steps}: exploring {x, y}")
+        if (x, y) == goal:
+            return path, steps, max_queue
+        for dx, dy in moves:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < len(maze) and 0 <= ny < len(maze[0]):
+                if maze[nx][ny] == 1 and (nx, ny) not in visited:
+                    queue.append(((nx, ny), path + [(nx, ny)]))
+                    max_queue = max(max_queue, len(queue))
+    return None, steps, max_queue
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+def a_star(maze, start, goal):
+    pq = PriorityQueue()
+    pq.put((0, start, [start], 0))
+    visited = set()
+    steps = 0
+    max_queue = 1
+    while not pq.empty():
+        f, (x, y), path, g = pq.get()
+        steps += 1
+        print(f"A* Step {steps}: exploring {x, y} | g={g}, h={heuristic((x,y), goal)}, f={f}")
+        if (x, y) == goal:
+            return path, steps, max_queue
+        visited.add((x, y))
+        for dx, dy in moves:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < len(maze) and 0 <= ny < len(maze[0]):
+                if maze[nx][ny] == 1 and (nx, ny) not in visited:
+                    new_g = g + 1
+                    f = new_g + heuristic((nx, ny), goal)
+                    pq.put((f, (nx, ny), path + [(nx, ny)], new_g))
+                    max_queue = max(max_queue, pq.qsize())
+    return None, steps, max_queue
+bfs_path, bfs_steps, bfs_space = bfs(maze, start, goal)
+a_star_path, a_star_steps, a_star_space = a_star(maze, start, goal)
+
+def display_path(maze, path, label):
+    maze_copy = [row[:] for row in maze]
+    for x, y in path:
+        if (x, y) != start and (x, y) != goal:
+            maze_copy[x][y] = '*'
+    maze_copy[start[0]][start[1]] = 'S'
+    maze_copy[goal[0]][goal[1]] = 'E'
+    print(f"\n{label} Solution path:\n")
+    for row in maze_copy:
+        print(" ".join(str(c) for c in row))
+    print()
+print("\nResult: ")
+if bfs_path:
+    display_path(maze, bfs_path, "BFS")
+    print(f"BFS Path length: {len(bfs_path) - 1}")
+    print(f"BFS Steps explored: {bfs_steps}")
+    print(f"BFS Max Queue size: {bfs_space}")
+
+if a_star_path:
+    display_path(maze, a_star_path, "A*")
+    print(f"A* Path length: {len(a_star_path) - 1}")
+    print(f"A* Steps explored (Time): {a_star_steps}")
+    print(f"A* Max Queue size (Space): {a_star_space}")
