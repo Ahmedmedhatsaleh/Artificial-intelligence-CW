@@ -1,0 +1,72 @@
+from math import isclose
+def reward(state):
+    goalstate = (2, 2)
+    return 10 if state == goalstate else -1
+def transition(state, action):
+    row, col = state
+    if action == "up":
+        nstate = (row - 1, col)
+    elif action == "down":
+        nstate = (row + 1, col)
+    elif action == "left":
+        nstate = (row, col - 1)
+    elif action == "right":
+        nstate = (row, col + 1)
+    else:
+        nstate = state
+    maxrow, maxcol = 2, 2
+    r, c = nstate
+    if r < 0 or r > maxrow or c < 0 or c > maxcol:
+        return state
+    return nstate
+def valueiteration(states, actions, theta=1e-4, gamma=0.9):
+    V = {s: 0.0 for s in states}
+    while True:
+        delta = 0.0
+        for s in states:
+            if s == (2, 2):
+                vnew = reward(s)
+            else:
+                qvals = []
+                for a in actions:
+                    nstate = transition(s, a)
+                    q = reward(s) + gamma * V[nstate]
+                    qvals.append(q)
+                vnew = max(qvals)
+            delta = max(delta, abs(V[s] - vnew))
+            V[s] = vnew
+        if delta < theta:
+            break
+    policy = {}
+    for s in states:
+        if s == (2, 2):
+            policy[s] = "G"
+            continue
+        besta = None
+        bestq = float("-inf")
+        for a in actions:
+            nstate = transition(s, a)
+            q = reward(s) + gamma * V[nstate]
+            if q > bestq:
+                bestq = q
+                besta = a
+        policy[s] = besta
+    return V, policy
+def printgridvalues(V, rows=3, cols=3):
+    print("Optimal state values:")
+    for i in range(rows):
+        rowvals = [f"{V[(i, j)]:6.2f}" for j in range(cols)]
+        print(" |".join(rowvals))
+    print()
+def printgridpolicy(policy, rows=3, cols=3):
+    arrows = {"up": "↑", "down": "↓", "left": "←", "right": "→", "G": "G"}
+    print("Optimal policy:")
+    for i in range(rows):
+        rowpol = [f"  {arrows[policy[(i, j)]]}  " for j in range(cols)]
+        print(" |".join(rowpol))
+    print()
+states = [(i, j) for i in range(3) for j in range(3)]
+actions = ["up", "down", "left", "right"]
+V, policy = valueiteration(states, actions)
+printgridvalues(V)
+printgridpolicy(policy)
