@@ -1,0 +1,74 @@
+@prefix : <http://example.com/smarthome#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+:Device a owl:Class .
+:Sensor a owl:Class ; rdfs:subClassOf :Device .
+:TemperatureSensor a owl:Class ; rdfs:subClassOf :Sensor .
+:MotionSensor a owl:Class ; rdfs:subClassOf :Sensor .
+:HumiditySensor a owl:Class ; rdfs:subClassOf :Sensor .
+:Room a owl:Class .
+
+:installedIn a owl:ObjectProperty ;
+    rdfs:domain :Device ;
+    rdfs:range :Room .
+
+:hasSensor a owl:ObjectProperty ;
+    rdfs:domain :Room ;
+    rdfs:range :Sensor .
+
+:hasID a owl:DatatypeProperty ;
+    rdfs:domain :Device ;
+    rdfs:range xsd:string .
+
+:hasReading a owl:DatatypeProperty ;
+    rdfs:domain :Sensor ;
+    rdfs:range xsd:float .
+
+:unit a owl:DatatypeProperty ;
+    rdfs:domain :Sensor ;
+    rdfs:range xsd:string .
+
+:LivingRoom a :Room .
+:Bedroom a :Room .
+:Kitchen a :Room .
+
+:TempSensor1 a :TemperatureSensor ;
+    :hasID "TS1" ;
+    :hasReading "22.3"^^xsd:float ;
+    :unit "Celsius" ;
+    :installedIn :LivingRoom .
+
+:TempSensor2 a :TemperatureSensor ;
+    :hasID "TS2" ;
+    :hasReading "24.8"^^xsd:float ;
+    :unit "Celsius" ;
+    :installedIn :Bedroom .
+
+:MotionSensor1 a :MotionSensor ;
+    :hasID "MS1" ;
+    :installedIn :LivingRoom .
+
+:MotionSensor2 a :MotionSensor ;
+    :hasID "MS2" ;
+    :installedIn :Kitchen .
+
+:HumiditySensor1 a :HumiditySensor ;
+    :hasID "HS1" ;
+    :hasReading "45.0"^^xsd:float ;
+    :unit "Percent" ;
+    :installedIn :Kitchen .
+
+:HumiditySensor2 a :HumiditySensor ;
+    :hasID "HS2" ;
+    :hasReading "50.0"^^xsd:float ;
+    :unit "Percent" ;
+    :installedIn :Bathroom .
+
+:TempSensor3 a :TemperatureSensor ;
+    :hasID "TS3" ;
+    :hasReading "30.1"^^xsd:float ;
+    :unit "Celsius" ;
+    :installedIn :Kitchen .
